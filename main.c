@@ -16,30 +16,40 @@ char* convertFromDecimal(int base, char inputNumber[]);
 	1 = BASE 10
 	2 = BASE 16
 */
+
+const int MAX_CHARS = 48;
 const int SUPPORTED_BASES[] = {2,10,16};
 const char SUPPORTED_CHARS[][17] = {"01", "0123456789", "0123456789ABCDEF"};
 
 int main(int argc, char *argv[]) {
 	// Maximum supported digits are 48
-	char input[48];
+	char input[MAX_CHARS];
 	int supportedLength, baseChecker, currentBase, nextBase;
 	// Asks as input an integer
 	printf("Type an integer (Maximum supported digits 48): \n");
 	// Replaced gets(strArr) with fgets(strArr, maxChars, stdin) for security
-	fgets(input, 48, stdin);
+	fgets(input, sizeof(input), stdin);
 	// Number of supported bases that will be used as iteration counter
 	supportedLength = sizeof(SUPPORTED_BASES)/sizeof(SUPPORTED_BASES[0]);
 	// Gets from user and checks compatibility for current and new base of the number
 	currentBase = validBase("current", supportedLength);
 	// Converts possible lowercase to capital before checking (lowerToUpper)
-	baseChecker = baseCheck(currentBase, lowerToUpper(input));
+	char* inputUpper = lowerToUpper(input);
+	baseChecker = baseCheck(currentBase, inputUpper);
 	if (baseChecker == 0){
-		printf("The current base does not match with the number you typed. Try again...");
+		printf("The current base does not match with the number you typed. Try again...\n");
+		free(inputUpper);
 		return 1;
 	}
 	nextBase = validBase("next", supportedLength);
-	char* result = baseConverter(currentBase, nextBase, lowerToUpper(input));
-	printf("Number before conversion (base %d):\t%s\nNumber after conversion (base %d):\t%s\n", SUPPORTED_BASES[currentBase], input, SUPPORTED_BASES[nextBase], result);
+	char* result = baseConverter(currentBase, nextBase, inputUpper);
+	printf("Number before conversion (base %d):\t%s\nNumber after conversion (base %d):\t%s\n", SUPPORTED_BASES[currentBase], inputUpper, SUPPORTED_BASES[nextBase], result);
+	// result and inputUpper is identical, so only one free is required (see baseConverter)
+	free(inputUpper);
+	// Avoids double free in case of same current and next base
+	if (currentBase != nextBase){
+		free(result); 
+	}
 	return 0;
 }
 
@@ -87,7 +97,13 @@ int baseCheck(int base, char inputNumber[]){
 
 char* lowerToUpper(char lowerString[]){
 	int i;
-	char upperString[48];
+	// Dynamic memory allocation
+	char* upperString = malloc((strlen(lowerString) + 1) * sizeof(char));
+	// Exits program in case of failed memory allocation
+	if (upperString == NULL){
+		printf("Memory allocation to lowerToUpper failed...\n");
+		exit(2);
+	}
 	for (i = 0; lowerString[i] != '\0'; i++) {
 		if(lowerString[i] >= 'a' && lowerString[i] <= 'z') {
 				upperString[i] = lowerString[i] - 32;
@@ -96,7 +112,8 @@ char* lowerToUpper(char lowerString[]){
 			upperString[i] = lowerString[i];
 		}
 	}
-	upperString[strlen(lowerString)] = '\0';
+	// Replaces (\n) char that fgets adds by default in the end with (\0)
+	upperString[strlen(lowerString) - 1] = '\0';
 	return upperString;
 }
 
@@ -109,7 +126,7 @@ char* baseConverter(int base, int newBase, char inputNumber[]){
 		return convertFromDecimal(newBase, inputNumber);
 	}
 	else {
-		char toDecimal[48];
+		char toDecimal[MAX_CHARS];
 		// Uses base 10 as middle converter
 		strcpy(toDecimal, convertToDecimal(base, inputNumber));
 		return convertFromDecimal(newBase, toDecimal);
@@ -118,7 +135,11 @@ char* baseConverter(int base, int newBase, char inputNumber[]){
 
 char* convertToDecimal(int base, char inputNumber[]){
 	int i, resultInteger = 0;
-	char resultString[48];
+	char* resultString = malloc(MAX_CHARS * sizeof(char));
+	if(resultString == NULL){
+		printf("Memory allocation to convertToDecimal failed\n");
+		exit(3);
+	}
 	for (i = 0; i < strlen(inputNumber); i++){
 		switch(inputNumber[i]){
 			case 'A':
@@ -151,8 +172,13 @@ char* convertToDecimal(int base, char inputNumber[]){
 }
 
 char* convertFromDecimal(int base, char inputNumber[]){
-	int inputInt = atoi(inputNumber), digitRemainder[48], digitCounter, j;
-	char charRemainder[48], outputString[48];
+	int inputInt = atoi(inputNumber), digitRemainder[MAX_CHARS], digitCounter, j;
+	char* charRemainder = malloc(MAX_CHARS * sizeof(char));
+	char* outputString = malloc (MAX_CHARS * sizeof(char));
+	if (charRemainder == NULL || outputString == NULL){
+		printf("Memory allocation to convertFromDecimal failed\n");
+		exit(4);
+	}
 	for (digitCounter = 0; inputInt != 0; digitCounter++){
 		digitRemainder[digitCounter] = inputInt % SUPPORTED_BASES[base];
 		inputInt = inputInt / SUPPORTED_BASES[base];
@@ -185,5 +211,6 @@ char* convertFromDecimal(int base, char inputNumber[]){
 	}
 	// Explicitly ends the string to avoid printing junk chars
 	outputString[digitCounter] = '\0';
+	free(charRemainder);
 	return outputString;
 }

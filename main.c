@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> // strlen, strcpy
-#include <math.h> // pow
+#include <stdbool.h> //bool (data type), true-false (keywords)
+#include <string.h> //strlen, strcpy
+#include <math.h> //pow
 
 int validBase(char situation[], int iterationCounter);
-int baseCheck(int base, char inputNumber[]);
+bool baseCheck(int base, char inputNumber[]);
 char* lowerToUpper(char lowerString[]);
 char* baseConverter(int base, int newBase, char inputNumber[]);
 char* convertToDecimal(int base, char inputNumber[]);
@@ -17,18 +18,24 @@ char* convertFromDecimal(int base, char inputNumber[]);
 	2 = BASE 16
 */
 
-const int MAX_CHARS = 48;
+const int MAX_CHARS = 32;
 const int SUPPORTED_BASES[] = {2,10,16};
 const char SUPPORTED_CHARS[][17] = {"01", "0123456789", "0123456789ABCDEF"};
 
 int main(int argc, char *argv[]) {
-	// Maximum supported digits are 48
-	char input[MAX_CHARS];
-	int supportedLength, baseChecker, currentBase, nextBase;
+	// Maximum supported digits are 32 (+ \n from fgets and \0 char)
+	char input[MAX_CHARS + 2];
+	int supportedLength, currentBase, nextBase;
+	bool baseChecker;
 	// Asks as input an integer
-	printf("Type an integer (Maximum supported digits 48): \n");
+	printf("Type an integer (Maximum supported digits 32): \n");
 	// Replaced gets(strArr) with fgets(strArr, maxChars, stdin) for security
 	fgets(input, sizeof(input), stdin);
+	// Checks number of digits (2nd from the end char from fgets is \n)
+	if (input[strlen(input) - 1] != '\n'){
+		printf("Unsupported length of digits (max 32). Try again...\n");
+		return 4;
+	}
 	// Number of supported bases that will be used as iteration counter
 	supportedLength = sizeof(SUPPORTED_BASES)/sizeof(SUPPORTED_BASES[0]);
 	// Gets from user and checks compatibility for current and new base of the number
@@ -36,7 +43,7 @@ int main(int argc, char *argv[]) {
 	// Converts possible lowercase to capital before checking (lowerToUpper)
 	char* inputUpper = lowerToUpper(input);
 	baseChecker = baseCheck(currentBase, inputUpper);
-	if (baseChecker == 0){
+	if (baseChecker == false){
 		printf("The current base does not match with the number you typed. Try again...\n");
 		free(inputUpper);
 		return 1;
@@ -57,38 +64,40 @@ int main(int argc, char *argv[]) {
 // Checks if an inserted base is supported by the program
 int validBase(char situation[], int iterationCounter){
 	// Asks for the integer's base (checks if it's supported)
-	int base, counter, isSupported = 0;
+	int base, counter;
+	bool isSupported = false;
 	do {
 		printf("Type the %s base of the integer: \n", situation);
 		scanf("%d", &base);
 		for(counter = 0; counter < iterationCounter; counter++){
 			if(base == SUPPORTED_BASES[counter]){
-				isSupported = 1;
+				isSupported = true;
 				break;
 			}
 		}		
-	} while(isSupported == 0);
+	} while(isSupported == false);
 	// Returns base according to the supported base map (check top of the program)
 	return counter;
 }
 
 // Checks if the input is compatible to the base that the user gave
-int baseCheck(int base, char inputNumber[]){
-	int isValid, inputChar, baseChar;
+bool baseCheck(int base, char inputNumber[]){
+	bool isValid;
+	int inputChar, baseChar;
 	int inputLength = strlen(inputNumber);
 	int supportedCharsLength = strlen(SUPPORTED_CHARS[base]);
 	for (inputChar = 0; inputChar < inputLength; inputChar++){
 		// Resets character checker
-		isValid = 0;
+		isValid = false;
 		// Iterates each char of the input with each character supported by the declared base and checks for matching
 		for(baseChar = 0; baseChar < supportedCharsLength; baseChar++){
 			if (inputNumber[inputChar] == SUPPORTED_CHARS[base][baseChar]){
-				isValid = 1;
+				isValid = true;
 				break;
 			}
 		}
 		// Exits if any character is invalid
-		if(isValid == 0){
+		if(isValid == false){
 			break;
 		}
 	}
@@ -116,7 +125,6 @@ char* lowerToUpper(char lowerString[]){
 	upperString[strlen(lowerString) - 1] = '\0';
 	return upperString;
 }
-
 
 char* baseConverter(int base, int newBase, char inputNumber[]){
 	if (base == newBase){

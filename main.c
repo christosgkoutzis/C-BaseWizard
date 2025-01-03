@@ -4,18 +4,27 @@
 #include <string.h> //strlen, strcpy
 #include <math.h> //pow
 
+#define toolLength 2
+/*
+	Supported tools map
+	1 = Integer Base Converter
+	2 = Integer Base Calculator 
+*/
+
 typedef struct{
 	char* value;
 	int baseindex; // see bases map
 } basenumber;
 
 basenumber getNumberAndBase(int basesLength);
+basenumber baseConverter(int supportedLength);
+basenumber baseCalculator(basenumber number1);
 int validBase(char situation[], int iterationCounter);
 bool baseCheck(int base, char inputNumber[]);
 char* lowerToUpper(char lowerString[]);
-char* baseConverter(int base, int newBase, char inputNumber[]);
 char* convertToDecimal(int base, char inputNumber[]);
 char* convertFromDecimal(int base, char inputNumber[]);
+
 
 /*
 	Supported bases map (useful for the 2 arrays below and validBase function) 
@@ -30,17 +39,46 @@ const int SUPPORTED_BASES[] = {2,8,10,16};
 const char SUPPORTED_CHARS[][17] = {"01","01234567", "0123456789", "0123456789ABCDEF"};
 
 int main(int argc, char *argv[]) {
-	int supportedLength = sizeof(SUPPORTED_BASES)/sizeof(SUPPORTED_BASES[0]);
-	basenumber inputUpper = getNumberAndBase(supportedLength);
-	int nextBase = validBase("next", supportedLength);
-	char* result = baseConverter(inputUpper.baseindex, nextBase, inputUpper.value);
-	printf("\nNumber before conversion (base %d):\t%s\nNumber after conversion (base %d):\t%s\n", SUPPORTED_BASES[inputUpper.baseindex], inputUpper.value, SUPPORTED_BASES[nextBase], result);
-	// result and inputUpper is identical, so only one free is required (see baseConverter)
-	free(inputUpper.value);
-	// Avoids double free in case of same current and next base
-	if (inputUpper.baseindex != nextBase){
-		free(result); 
+	printf("\n-------- / WELCOME TO C - BASEWIZARD \\ ------- \n");
+	system("read -p '\nPress Enter to continue...' var");
+	int tool;
+	bool validTool; 
+	do {
+	printf("\n-------- | Select a tool(press the corresponding number) | ------- \n\n\t1.\tInteger Base Converter\n\t2.\tInteger Base Calculator\n\nTool number:\t");
+	scanf("%d", &tool);
+	// Clears the input buffer
+	int ch;
+	while ((ch = getchar()) != '\n' && ch != EOF);
+	validTool = (tool >= 1 && tool <= toolLength);
+	if (!validTool){
+		system("read -p '\nWrong input. Please try again...(press Enter to continue)' var");
 	}
+	} while(!validTool);
+	int supportedLength = sizeof(SUPPORTED_BASES)/sizeof(SUPPORTED_BASES[0]);
+	int cont = false;
+	basenumber result;
+	result.value = malloc((MAX_CHARS + 2) * sizeof(char));
+	do {
+		if (cont == true) {
+			result = baseCalculator(result);
+		}
+		else{
+			switch(tool){
+				case 1:
+					result = baseConverter(supportedLength);
+				break;
+				case 2:
+					basenumber number1;
+					number1.value = malloc((MAX_CHARS + 2) * sizeof(char));
+					number1 = getNumberAndBase(supportedLength);
+					result = baseCalculator(number1);
+					free(number1.value);
+			}
+		}	
+		printf("\nDo you want to use the calculator with the result? (press 0 to end or 1 to continue):\t");
+		scanf("%d", &cont);
+	} while (cont == true);
+	free(result.value);
 	return 0;
 }
 
@@ -51,7 +89,7 @@ basenumber getNumberAndBase(int basesLength){
 	bool compatibleLength, baseChecker;
 	do {
 		// Asks as input an integer
-		printf("\nType an integer (Maximum supported digits 32): \t");
+		printf("\nType an integer (Maximum supported digits %d): \t", MAX_CHARS);
 		// Replaced gets(strArr) with fgets(strArr, maxChars, stdin) for security
 		fgets(input, sizeof(input), stdin);
 		// Checks number of digits (2nd from the end char from fgets is \n)
@@ -60,7 +98,7 @@ basenumber getNumberAndBase(int basesLength){
 			// Clears input buffer for fgets
 			int ch;
 			while ((ch = getchar()) != '\n' && ch != EOF);
-			printf("\nUnsupported length of digits (max 32). Try again...\n");
+			printf("\nUnsupported length of digits (max %d). Try again...\n", MAX_CHARS);
 		}
 	} while(!compatibleLength);
 	do {
@@ -142,19 +180,30 @@ char* lowerToUpper(char lowerString[]){
 	return upperString;
 }
 
-char* baseConverter(int base, int newBase, char inputNumber[]){
-	if (base == newBase){
-		return inputNumber;
+basenumber baseConverter(int supportedLength){
+	printf("\n-------- | Integer Base Converter | ------- \n");
+	basenumber inputNumber = getNumberAndBase(supportedLength), outputNumber;
+	outputNumber.value = malloc((MAX_CHARS + 2) * sizeof(char));
+	if(outputNumber.value == NULL){
+		printf("\nMemory allocation to baseConverter failed...");
+		exit(5);
 	}
-	else if (SUPPORTED_BASES[base] == 10){
-		return convertFromDecimal(newBase, inputNumber);
+	outputNumber.baseindex = validBase("next", supportedLength); 
+	if (inputNumber.baseindex == outputNumber.baseindex){
+		strcpy(outputNumber.value, inputNumber.value);
+	}
+	else if (SUPPORTED_BASES[inputNumber.baseindex] == 10){
+		strcpy(outputNumber.value, convertFromDecimal(outputNumber.baseindex, inputNumber.value));
 	}
 	else {
-		char toDecimal[MAX_CHARS];
+		char toDecimal[MAX_CHARS + 2];
 		// Uses base 10 as middle converter
-		strcpy(toDecimal, convertToDecimal(base, inputNumber));
-		return convertFromDecimal(newBase, toDecimal);
+		strcpy(toDecimal, convertToDecimal(inputNumber.baseindex, inputNumber.value));
+		strcpy(outputNumber.value, convertFromDecimal(outputNumber.baseindex, toDecimal));
 	}
+	printf("\nNumber before conversion (base %d):\t%s\nNumber after conversion (base %d):\t%s\n", SUPPORTED_BASES[inputNumber.baseindex], inputNumber.value, SUPPORTED_BASES[outputNumber.baseindex], outputNumber.value);
+	free(inputNumber.value);
+	return outputNumber;
 }
 
 char* convertToDecimal(int base, char inputNumber[]){
@@ -239,3 +288,9 @@ char* convertFromDecimal(int base, char inputNumber[]){
 	free(charRemainder);
 	return outputString;
 }
+
+basenumber baseCalculator(basenumber number1){
+	basenumber calcResult;
+	calcResult.value = malloc(MAX_CHARS * sizeof(char));
+	return calcResult;
+	}

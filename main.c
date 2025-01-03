@@ -4,6 +4,12 @@
 #include <string.h> //strlen, strcpy
 #include <math.h> //pow
 
+typedef struct{
+	char* value;
+	int baseindex; // see bases map
+} basenumber;
+
+basenumber getNumberAndBase(int basesLength);
 int validBase(char situation[], int iterationCounter);
 bool baseCheck(int base, char inputNumber[]);
 char* lowerToUpper(char lowerString[]);
@@ -14,50 +20,60 @@ char* convertFromDecimal(int base, char inputNumber[]);
 /*
 	Supported bases map (useful for the 2 arrays below and validBase function) 
 	0 = BASE 2
-	1 = BASE 10
-	2 = BASE 16
+	1 = BASE 8
+	2 = BASE 10
+	3 = BASE 16
 */
 
 const int MAX_CHARS = 32;
-const int SUPPORTED_BASES[] = {2,10,16};
-const char SUPPORTED_CHARS[][17] = {"01", "0123456789", "0123456789ABCDEF"};
+const int SUPPORTED_BASES[] = {2,8,10,16};
+const char SUPPORTED_CHARS[][17] = {"01","01234567", "0123456789", "0123456789ABCDEF"};
 
 int main(int argc, char *argv[]) {
-	// Maximum supported digits are 32 (+ \n from fgets and \0 char)
-	char input[MAX_CHARS + 2];
-	int supportedLength, currentBase, nextBase;
-	bool baseChecker;
-	// Asks as input an integer
-	printf("Type an integer (Maximum supported digits 32): \n");
-	// Replaced gets(strArr) with fgets(strArr, maxChars, stdin) for security
-	fgets(input, sizeof(input), stdin);
-	// Checks number of digits (2nd from the end char from fgets is \n)
-	if (input[strlen(input) - 1] != '\n'){
-		printf("Unsupported length of digits (max 32). Try again...\n");
-		return 4;
-	}
-	// Number of supported bases that will be used as iteration counter
-	supportedLength = sizeof(SUPPORTED_BASES)/sizeof(SUPPORTED_BASES[0]);
-	// Gets from user and checks compatibility for current and new base of the number
-	currentBase = validBase("current", supportedLength);
-	// Converts possible lowercase to capital before checking (lowerToUpper)
-	char* inputUpper = lowerToUpper(input);
-	baseChecker = baseCheck(currentBase, inputUpper);
-	if (baseChecker == false){
-		printf("The current base does not match with the number you typed. Try again...\n");
-		free(inputUpper);
-		return 1;
-	}
-	nextBase = validBase("next", supportedLength);
-	char* result = baseConverter(currentBase, nextBase, inputUpper);
-	printf("Number before conversion (base %d):\t%s\nNumber after conversion (base %d):\t%s\n", SUPPORTED_BASES[currentBase], inputUpper, SUPPORTED_BASES[nextBase], result);
+	int supportedLength = sizeof(SUPPORTED_BASES)/sizeof(SUPPORTED_BASES[0]);
+	basenumber inputUpper = getNumberAndBase(supportedLength);
+	int nextBase = validBase("next", supportedLength);
+	char* result = baseConverter(inputUpper.baseindex, nextBase, inputUpper.value);
+	printf("\nNumber before conversion (base %d):\t%s\nNumber after conversion (base %d):\t%s\n", SUPPORTED_BASES[inputUpper.baseindex], inputUpper.value, SUPPORTED_BASES[nextBase], result);
 	// result and inputUpper is identical, so only one free is required (see baseConverter)
-	free(inputUpper);
+	free(inputUpper.value);
 	// Avoids double free in case of same current and next base
-	if (currentBase != nextBase){
+	if (inputUpper.baseindex != nextBase){
 		free(result); 
 	}
 	return 0;
+}
+
+basenumber getNumberAndBase(int basesLength){
+	basenumber inputUpper;
+	// Maximum supported digits are 32 (+ \n from fgets and \0 char)
+	char input[MAX_CHARS + 2];
+	bool compatibleLength, baseChecker;
+	do {
+		// Asks as input an integer
+		printf("\nType an integer (Maximum supported digits 32): \t");
+		// Replaced gets(strArr) with fgets(strArr, maxChars, stdin) for security
+		fgets(input, sizeof(input), stdin);
+		// Checks number of digits (2nd from the end char from fgets is \n)
+		compatibleLength = (input[strlen(input) - 1] == '\n');
+		if (!compatibleLength){
+			// Clears input buffer for fgets
+			int ch;
+			while ((ch = getchar()) != '\n' && ch != EOF);
+			printf("\nUnsupported length of digits (max 32). Try again...\n");
+		}
+	} while(!compatibleLength);
+	do {
+		// Gets from user and checks compatibility for current and new base of the number
+		inputUpper.baseindex = validBase("current", basesLength);
+		// Converts possible lowercase to capital before checking (lowerToUpper)
+		inputUpper.value = lowerToUpper(input);
+		baseChecker = baseCheck(inputUpper.baseindex, inputUpper.value);
+		if (!baseChecker){
+			printf("\nThe current base does not match with the number you typed. Try again...\n");
+		}
+	} while(!baseChecker);
+	return inputUpper;
 }
 
 
@@ -67,7 +83,7 @@ int validBase(char situation[], int iterationCounter){
 	int base, counter;
 	bool isSupported = false;
 	do {
-		printf("Type the %s base of the integer: \n", situation);
+		printf("\nType the %s base of the integer: \t", situation);
 		scanf("%d", &base);
 		for(counter = 0; counter < iterationCounter; counter++){
 			if(base == SUPPORTED_BASES[counter]){
@@ -110,7 +126,7 @@ char* lowerToUpper(char lowerString[]){
 	char* upperString = malloc((strlen(lowerString) + 1) * sizeof(char));
 	// Exits program in case of failed memory allocation
 	if (upperString == NULL){
-		printf("Memory allocation to lowerToUpper failed...\n");
+		printf("\nMemory allocation to lowerToUpper failed...");
 		exit(2);
 	}
 	for (i = 0; lowerString[i] != '\0'; i++) {
@@ -130,7 +146,7 @@ char* baseConverter(int base, int newBase, char inputNumber[]){
 	if (base == newBase){
 		return inputNumber;
 	}
-	else if (base == 1){
+	else if (SUPPORTED_BASES[base] == 10){
 		return convertFromDecimal(newBase, inputNumber);
 	}
 	else {
@@ -184,7 +200,7 @@ char* convertFromDecimal(int base, char inputNumber[]){
 	char* charRemainder = malloc(MAX_CHARS * sizeof(char));
 	char* outputString = malloc (MAX_CHARS * sizeof(char));
 	if (charRemainder == NULL || outputString == NULL){
-		printf("Memory allocation to convertFromDecimal failed\n");
+		printf("\nMemory allocation to convertFromDecimal failed");
 		exit(4);
 	}
 	for (digitCounter = 0; inputInt != 0; digitCounter++){
@@ -214,6 +230,7 @@ char* convertFromDecimal(int base, char inputNumber[]){
 			break;
 		}
 	}
+	// Reverses the elements of the remainder int array into the result char array (string)
 	for (j = 0; j < digitCounter; j++){
 		outputString[j] = charRemainder[digitCounter - 1 - j];
 	}

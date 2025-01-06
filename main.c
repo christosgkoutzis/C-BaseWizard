@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h> //bool (data type), true-false (keywords)
-#include <string.h> //strlen, strcpy
-#include <math.h> //pow
+#include <stdbool.h> // bool (data type), true-false (keywords)
+#include <string.h> // strlen, strcpy, strtok
+#include <math.h> // pow
 
 #define toolLength 2
 /*
@@ -26,6 +26,7 @@ char* convertToDecimal(int base, char inputNumber[]);
 char* convertFromDecimal(int base, char inputNumber[]);
 char validMathOperator(void);
 void switchPositions(int *number1, int *number2);
+void clearInputBuffer(void);
 
 
 /*
@@ -50,9 +51,7 @@ int main(int argc, char *argv[]) {
 	do {
 	printf("\n-------- | Select a tool(press the corresponding number) | ------- \n\n\t1.\tInteger Base Converter\n\t2.\tInteger Base Calculator\n\nTool number:\t");
 	scanf("%d", &tool);
-	// Clears the input buffer
-	int ch;
-	while ((ch = getchar()) != '\n' && ch != EOF);
+	clearInputBuffer();
 	validTool = (tool >= 1 && tool <= toolLength);
 	if (!validTool){
 		system("read -p '\nWrong input. Please try again...(press Enter to continue)' var");
@@ -81,11 +80,10 @@ int main(int argc, char *argv[]) {
 		}	
 		printf("\nDo you want to use the calculator with the result? (press 0 to end or 1 to continue):\t");
 		scanf("%d", &cont);
-		// Clears the input buffer
-		int ch;
-		while ((ch = getchar()) != '\n' && ch != EOF);
+		clearInputBuffer();
 	} while (cont == true);
 	free(result.value);
+	printf("\n-------- | Thank you for using C-BaseWizard | ------- \n");
 	return 0;
 }
 
@@ -99,13 +97,11 @@ basenumber getNumberAndBase(int basesLength){
 		// Asks as input an integer
 		printf("\nType an integer (Maximum supported digits %d): \t", MAX_CHARS);
 		// Replaced gets(strArr) with fgets(strArr, maxChars, stdin) for security
-		fgets(input, sizeof(input), stdin);
+		fgets(input, MAX_CHARS + 2, stdin);
 		// Checks number of digits (2nd from the end char from fgets is \n)
 		compatibleLength = (input[strlen(input) - 1] == '\n');
 		if (!compatibleLength){
-			// Clears input buffer for fgets
-			int ch;
-			while ((ch = getchar()) != '\n' && ch != EOF);
+			clearInputBuffer();
 			printf("\nUnsupported length of digits (max %d). Try again...\n", MAX_CHARS);
 		}
 	} while(!compatibleLength);
@@ -114,7 +110,12 @@ basenumber getNumberAndBase(int basesLength){
 		inputUpper.baseindex = validBase("current", basesLength);
 		// Converts possible lowercase to capital before checking (lowerToUpper)
 		inputUpper.value = lowerToUpper(input);
-		baseChecker = baseCheck(inputUpper.baseindex, inputUpper.value);
+		// Adjust baseCheck to handle negative sign
+		if (inputUpper.value[0] == '-') {
+			baseChecker = baseCheck(inputUpper.baseindex, inputUpper.value + 1);
+		} else {
+			baseChecker = baseCheck(inputUpper.baseindex, inputUpper.value);
+		}
 		if (!baseChecker){
 			printf("\nThe current base does not match with the number you typed. Try again...\n");
 		}
@@ -132,9 +133,7 @@ int validBase(char situation[], int iterationCounter){
 	do {
 		printf("\nType the %s base of the integer: \t", situation);
 		scanf("%d", &base);
-		// Clears the input buffer
-		int ch;
-		while ((ch = getchar()) != '\n' && ch != EOF);
+		clearInputBuffer();
 		for(counter = 0; counter < iterationCounter; counter++){
 			if(base == SUPPORTED_BASES[counter]){
 				isSupported = true;
@@ -220,12 +219,14 @@ basenumber baseConverter(int supportedLength){
 
 char* convertToDecimal(int base, char inputNumber[]){
 	int i, resultInteger = 0;
+	bool isNegative = (inputNumber[0] == '-');
+	int startIndex = isNegative ? 1 : 0;
 	char* resultString = malloc(MAX_CHARS * sizeof(char));
 	if(resultString == NULL){
 		printf("Memory allocation to convertToDecimal failed\n");
 		exit(3);
 	}
-	for (i = 0; i < strlen(inputNumber); i++){
+	for (i = startIndex; i < strlen(inputNumber); i++){
 		switch(inputNumber[i]){
 			case 'A':
 				resultInteger += 10 * pow(SUPPORTED_BASES[base],strlen(inputNumber) - 1 - i);
@@ -251,6 +252,9 @@ char* convertToDecimal(int base, char inputNumber[]){
 			break;
 		}
 	}
+	if (isNegative) {
+		resultInteger = -resultInteger;
+	}
 	// Converts the integer (from resultInteger) to string and stores it to resultString 
 	sprintf(resultString, "%d", resultInteger);
 	return resultString;
@@ -258,6 +262,10 @@ char* convertToDecimal(int base, char inputNumber[]){
 
 char* convertFromDecimal(int base, char inputNumber[]){
 	int inputInt = atoi(inputNumber), digitRemainder[MAX_CHARS], digitCounter, j;
+	bool isNegative = (inputInt < 0);
+	if (isNegative) {
+		inputInt = -inputInt;
+	}
 	char* charRemainder = malloc(MAX_CHARS * sizeof(char));
 	char* outputString = malloc (MAX_CHARS * sizeof(char));
 	if (charRemainder == NULL || outputString == NULL){
@@ -297,14 +305,22 @@ char* convertFromDecimal(int base, char inputNumber[]){
 	}
 	// Explicitly ends the string to avoid printing junk chars
 	outputString[digitCounter] = '\0';
+	if (isNegative) {
+		char* negativeOutputString = malloc((strlen(outputString) + 2) * sizeof(char));
+		sprintf(negativeOutputString, "-%s", outputString);
+		free(outputString);
+		free(charRemainder);
+		return negativeOutputString;
+	}
 	free(charRemainder);
 	return outputString;
 }
 
 basenumber baseCalculator(basenumber number1, int basesLength){
 	basenumber number2 = getNumberAndBase(basesLength), calcResult;
-	char* number1ToDec;
-	char* number2ToDec;
+	// Initializing the strings in NULL prevents unnecessary memory allocation
+	char* number1ToDec = NULL;
+	char* number2ToDec = NULL;
 	int number1Int, number2Int, base10counter;
 	float resultFlo;
 	calcResult.value = malloc((MAX_CHARS + 2) * sizeof(char));
@@ -312,9 +328,13 @@ basenumber baseCalculator(basenumber number1, int basesLength){
 	// Converts both string numbers to base10 format
 	if (SUPPORTED_BASES[number1.baseindex] != 10){
 		number1ToDec = convertToDecimal(number1.baseindex, number1.value);
+	} else {
+		number1ToDec = number1.value;
 	}
 	if (SUPPORTED_BASES[number2.baseindex] != 10){
 		number2ToDec = convertToDecimal(number2.baseindex, number2.value);
+	} else {
+		number2ToDec = number2.value;
 	}
 	// Converts to integers the base 2 numbers
 	number1Int = atoi(number1ToDec);
@@ -337,7 +357,7 @@ basenumber baseCalculator(basenumber number1, int basesLength){
 				printf("Calculation is impossible. Exiting program...");
 				exit(6);
 			}
-			resultFlo = (float)(number1Int / number2Int);
+			resultFlo = (float)number1Int / (float)number2Int;
 			break;
 	}
 	// Copies as a string the float value of the number to calcResult
@@ -355,9 +375,7 @@ basenumber baseCalculator(basenumber number1, int basesLength){
 	do {
 		printf("\nDo you want to convert it to another base (only the integer part will be converted for divisions)?(press 0 for no or 1 for yes)\n\nAnswer:\t");
 		scanf("%d", &convertInput);
-		// Clears the input buffer
-		int ch;
-		while ((ch = getchar()) != '\n' && ch != EOF);
+		clearInputBuffer();
 		isValidInput = (convertInput == 0 || convertInput == 1);
 		if (!isValidInput){
 			printf("\nIncorrect input. Please try again...");
@@ -365,15 +383,20 @@ basenumber baseCalculator(basenumber number1, int basesLength){
 	} while (!isValidInput);
 	if (convertInput == true) {
 		calcResult.baseindex = validBase("next", basesLength);
-		strcpy(calcResult.value, convertFromDecimal(calcResult.baseindex, calcResult.value));
+		strcpy(calcResult.value, convertFromDecimal(calcResult.baseindex, strtok(calcResult.value, ".")));
 		printf("\nNew integer value: \t%s\nNew Base: \t%d", calcResult.value, SUPPORTED_BASES[calcResult.baseindex]);
 	}
 	free(number2.value);
-	free(number1ToDec);
-	free(number2ToDec);
+	if (SUPPORTED_BASES[number1.baseindex] != 10) {
+		free(number1ToDec);
+	}
+	if (SUPPORTED_BASES[number2.baseindex] != 10) {
+		free(number2ToDec);
+	}
 	return calcResult;
 }
 
+// Checks if the input is a valid math operator
 char validMathOperator(void){
 	int i;
 	char mathOperator;
@@ -381,9 +404,7 @@ char validMathOperator(void){
 	do {
 	printf("\nType an operator(+,-,*,/):\t");
 	scanf("%c", &mathOperator);
-	// Clears the input buffer
-	int ch;
-	while ((ch = getchar()) != '\n' && ch != EOF);
+	clearInputBuffer();
 	for(i = 0; i < 4; i++){
 		if(MATH_OPERATORS[i] == mathOperator){
 			isValidOperator = true;
@@ -396,15 +417,14 @@ char validMathOperator(void){
 	return mathOperator;
 }
 
+// Switches the positions of 2 integers (using pointers)
 void switchPositions(int *number1, int *number2){
 	int switchSelect;
 	bool isValidInput;
 	do{
 		printf("\nThe current position before the operation is:\n\tNumber 1:\t%d\n\tNumber 2: \t%d\nDo you want to switch positions(press 0 for no and 1 for yes)?\t", *number1, *number2);
 		scanf("%d", &switchSelect);
-		// Clears the input buffer
-		int ch;
-		while ((ch = getchar()) != '\n' && ch != EOF);
+		clearInputBuffer();
 		isValidInput = (switchSelect == 0 || switchSelect == 1);
 		if (!isValidInput){
 			printf("\nIncorrect input. Please try again...");
@@ -416,4 +436,10 @@ void switchPositions(int *number1, int *number2){
 		*number2 = temp;
 	}
 	return;
+}
+
+// Clears the input buffer for scanf and fgets functions
+void clearInputBuffer(void){
+	int ch;
+	while ((ch = getchar()) != '\n' && ch != EOF);
 }

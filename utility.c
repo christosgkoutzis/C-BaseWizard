@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "utility.h"
 
-const int MAX_CHARS = 32;
+const int MAX_CHARS = 12;
 const int SUPPORTED_BASES[] = {2,8,10,16};
 const char SUPPORTED_CHARS[][17] = {"01","01234567", "0123456789", "0123456789ABCDEF"};
 const char MATH_OPERATORS[4] = {'+','-','*','/'};

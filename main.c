@@ -6,21 +6,25 @@
 #include "baseconverter.h"
 #include "basecalculator.h"
 #include "utility.h"
+#include "basesortingtool.h"
 
-#define toolLength 2
+#define toolLength 3
 /*
-	Supported tools map
+	Supported tools map:
+
 	1 = Integer Base Converter
-	2 = Integer Base Calculator 
+	2 = Integer Base Calculator
+	3 = Base Sorting Tool 
+
 */
 
 int main(int argc, char *argv[]) {
-	printf("\n-------- / WELCOME TO C - BASEWIZARD \\ ------- \n");
+	printf("\n-------- / WELCOME TO C - BASEWIZARD \\ ------- \n\nWARNING: This program is designed to work with integers only up to %d digits. If the user's inputs or the results do not meet this requirement, the program will not work properly.\n", MAX_CHARS);
 	system("read -p '\nPress Enter to continue...' var");
 	int tool;
 	bool validTool; 
 	do {
-	printf("\n-------- | Select a tool(press the corresponding number) | ------- \n\n\t1.\tInteger Base Converter\n\t2.\tInteger Base Calculator\n\nTool number:\t");
+	printf("\n-------- | Select a tool (press the corresponding number) | ------- \n\n\t1.\tInteger Base Converter\n\t2.\tInteger Base Calculator\n\t3.\tBase Sorting Tool\n\nTool number:\t");
 	scanf("%d", &tool);
 	clearInputBuffer();
 	validTool = (tool >= 1 && tool <= toolLength);
@@ -47,6 +51,10 @@ int main(int argc, char *argv[]) {
 					number1 = getNumberAndBase(supportedLength);
 					result = baseCalculator(number1, supportedLength);
 					free(number1.value);
+				break;
+				case 3:
+					result = baseSort(supportedLength);
+				break;
 			}
 		}	
 		printf("\nDo you want to use the calculator with the result? (press 0 to end or 1 to continue):\t");

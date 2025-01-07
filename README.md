@@ -18,11 +18,11 @@ This program demonstrates and puts into practice my basic-concept knowledge in t
 
 This program takes as input by the user integers in 4 different bases (2,8,10,16) from the standard input (keyboard) and performs basic mathematical tasks with them, by using the following tools:
 
-  -  Base Converter (Converts an integer from any supported base to another)
+  -  <strong>Base Converter</strong> (Converts an integer from any supported base to another)
         
-  -  Base Calculator (Performs the 4 basic math operations <code>+,-,*,/</code> between 2 integers in any supported base. The 2 integers may be in different base, thanks to the previous tool)
+  -  <strong>Base Calculator</strong> (Performs the 4 basic math operations <code>+,-,*,/</code> between 2 integers in any supported base. The 2 integers may be in different base, thanks to the previous tool)
     
-  -  Base Sorting Tool (Accepts as input variable amount of integers in any supported base, according to the user's needs and stores them in an array in an ascending value order)
+  -  <strong>Base Sorting Tool</strong> (Accepts as input variable amount of integers in any supported base, according to the user's needs and stores them in an array in an ascending value order)
 
 These tools are connected to each other through the program's interface, so the user can flawlessly use one tool with the results of the previously used tool.
 

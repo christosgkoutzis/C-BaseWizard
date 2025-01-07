@@ -2,7 +2,7 @@
 <h3 align="center">A simple command-line toolkit written in C for performing basic math-related tasks with integers in different bases.</h3>
 
 <p align="center">
-  <img src="cbasewizard.jpg" alt="cbasewizard" width=80%>
+  <img src="dashboard.jpg" alt="cbasewizard" width=80%>
 </p>
 <br/>
 

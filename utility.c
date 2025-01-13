@@ -118,3 +118,11 @@ void clearInputBuffer(void){
 	int ch;
 	while ((ch = getchar()) != '\n' && ch != EOF);
 }
+
+// Checks if the result's digits are compatible with the maximum supported digits
+void checkValidResultDigits(char result[]){
+	if (strlen(result) > MAX_CHARS){
+		printf("\nThe result has more digits than the maximum supported (%d). Exiting program...\n", MAX_CHARS);
+		exit(7);
+	}
+}

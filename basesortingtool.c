@@ -71,7 +71,7 @@ int compareBaseNumbers(const void *a, const void *b){
   basenumber* number2 = (basenumber *)b;
   char* number1ToDec = convertToDecimal(number1->baseindex, number1->value);
   char* number2ToDec = convertToDecimal(number2->baseindex, number2->value);
-  int Dec1Int = atoi(number1ToDec);
-  int Dec2Int = atoi(number2ToDec);
+  long long Dec1Int = strtoll(number1ToDec, NULL, 10);
+  long long Dec2Int = strtoll(number2ToDec, NULL, 10);
   return Dec1Int - Dec2Int;
 }

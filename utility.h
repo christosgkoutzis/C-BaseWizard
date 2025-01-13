@@ -24,5 +24,6 @@ int validBase(char situation[], int iterationCounter);
 bool baseCheck(int base, char inputNumber[]);
 char* lowerToUpper(char lowerString[]);
 void clearInputBuffer(void);
+void checkValidResultDigits(char result[]);
 
 #endif

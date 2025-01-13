@@ -13,7 +13,8 @@ basenumber baseCalculator(basenumber number1, int basesLength){
 	// Initializing the strings in NULL prevents unnecessary memory allocation
 	char* number1ToDec = NULL;
 	char* number2ToDec = NULL;
-	int number1Int, number2Int, base10counter;
+	long long number1Int, number2Int; 
+	int base10counter;
 	float resultFlo;
 	calcResult.value = malloc((MAX_CHARS + 2) * sizeof(char));
 	char operator = validMathOperator();
@@ -29,8 +30,8 @@ basenumber baseCalculator(basenumber number1, int basesLength){
 		number2ToDec = number2.value;
 	}
 	// Converts to integers the base 2 numbers
-	number1Int = atoi(number1ToDec);
-	number2Int = atoi(number2ToDec);
+	number1Int = strtoll(number1ToDec, NULL, 10);
+	number2Int = strtoll(number2ToDec, NULL, 10);
 	// Performs the base10 operation regarding the operator's input
 	switch(operator){
 		case '+':
@@ -54,6 +55,7 @@ basenumber baseCalculator(basenumber number1, int basesLength){
 	}
 	// Copies as a string the float value of the number to calcResult
 	sprintf(calcResult.value,"%.2f",resultFlo);
+	checkValidResultDigits(calcResult.value);
 	// Fills baseindex with base10 counter
 	for (base10counter = 0; base10counter < basesLength; base10counter++){
 		if(SUPPORTED_BASES[base10counter] == 10){
@@ -110,11 +112,11 @@ char validMathOperator(void){
 }
 
 // Switches the positions of 2 integers (using pointers)
-void switchPositions(int *number1, int *number2){
+void switchPositions(long long *number1, long long *number2){
 	int switchSelect;
 	bool isValidInput;
 	do{
-		printf("\nThe current position before the operation is:\n\tNumber 1:\t%d\n\tNumber 2: \t%d\nDo you want to switch positions(press 0 for no and 1 for yes)?\t", *number1, *number2);
+		printf("\nThe current position before the operation is:\n\tNumber 1:\t%lld\n\tNumber 2: \t%lld\nDo you want to switch positions(press 0 for no and 1 for yes)?\t", *number1, *number2);
 		scanf("%d", &switchSelect);
 		clearInputBuffer();
 		isValidInput = (switchSelect == 0 || switchSelect == 1);

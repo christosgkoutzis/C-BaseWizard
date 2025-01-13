@@ -4,6 +4,6 @@
 
 basenumber baseCalculator(basenumber number1, int basesLength);
 char validMathOperator(void);
-void switchPositions(int *number1, int *number2);
+void switchPositions(long long *number1, long long *number2);
 
 #endif

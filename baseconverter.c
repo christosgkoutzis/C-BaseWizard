@@ -78,7 +78,9 @@ char* convertToDecimal(int base, char inputNumber[]){
 }
 
 char* convertFromDecimal(int base, char inputNumber[]){
-	int inputInt = atoi(inputNumber), digitRemainder[MAX_CHARS], digitCounter, j;
+	int digitRemainder[MAX_CHARS], digitCounter, j;
+	// long long (64-bit integer) to accept all 12-digit numbers. strtoll (String to long long from <stdlib.h>) replaces atoi (contribute by kallenosf)
+	long long inputInt = strtoll(inputNumber, NULL, 10); 
 	bool isNegative = (inputInt < 0);
 	if (isNegative) {
 		inputInt = -inputInt;
@@ -127,8 +129,10 @@ char* convertFromDecimal(int base, char inputNumber[]){
 		sprintf(negativeOutputString, "-%s", outputString);
 		free(outputString);
 		free(charRemainder);
+		checkValidResultDigits(negativeOutputString);
 		return negativeOutputString;
 	}
 	free(charRemainder);
+	checkValidResultDigits(outputString);
 	return outputString;
 }

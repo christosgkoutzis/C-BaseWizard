@@ -39,6 +39,10 @@ To try out this project yourself (instructions for bash CLI):
 ## Roadmap
 
 -  Create more complicated math tools that involve reading and writing results to files with various formats
+
+## Contributors
+
+-  <a href=https://github.com/kallenosf>kallenosf</a>  (Provided feedback on how to manage properly large input values)
  
 ## Contributing
 
